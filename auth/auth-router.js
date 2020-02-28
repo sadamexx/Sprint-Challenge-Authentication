@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const Users = require('./auth-model.js');
 
 
@@ -10,8 +11,7 @@ router.post('/register', (req, res) => {
 
   Users.add(user)
   .then(saved => {
-    req.session.loggedIn = true;
-
+    // req.session.loggedIn = true;
     res.status(201).json(saved);
   })
   .catch(error => {
@@ -26,9 +26,10 @@ router.post('/login', (req, res) => {
   .first()
   .then(user => {
     if(user && bcrypt.compareSync(password, user.password)){
-      req.session.loggedIn = true;
-      req.session.username = user.username;
-      res.status(200).json({message: `Welcome ${user.username}!`})
+      // req.session.loggedIn = true;
+      // req.session.username = user.username;
+      const token = signToken(user)
+      res.status(200).json({message: `Welcome ${user.username}!`, token})
     } else {
       res.status(401).json({ message: "Invalid Credentials"});
     }
@@ -38,18 +39,34 @@ router.post('/login', (req, res) => {
   });
 });
 
-router.get('/logout', (req, res) => {
-  if(req.session){
-    req.session.destroy(error => {
-      if(err){
-        res.status(500).json({ message: "You are still logged in, sorry!"});
-      } else {
-        res.status(200).json({ message: "You successfully logged out! Come back soon!"});
-      }
-    });
-  } else {
-    res.status(200).json({ message: "You successfully logged out! Come back soon!"});
-  }
-});
+// router.get('/logout', (req, res) => {
+//   if(req.session){
+//     req.session.destroy(error => {
+//       if(err){
+//         res.status(500).json({ message: "You are still logged in, sorry!"});
+//       } else {
+//         res.status(200).json({ message: "You successfully logged out! Come back soon!"});
+//       }
+//     });
+//   } else {
+//     res.status(200).json({ message: "You successfully logged out! Come back soon!"});
+//   }
+// });
+
+//Sign Token
+function signToken(user) {
+  const payload = {
+    username: user.username,
+    id: user.id
+  };
+
+  const secret = "Chanyeol";
+
+  const options = {
+    expiresIn: "1d"
+  };
+
+  return jwt.sign(payload, secret, options);
+};
 
 module.exports = router;
