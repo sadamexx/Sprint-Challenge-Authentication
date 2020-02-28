@@ -40,7 +40,7 @@ server.use('/api/jokes', authenticate, jokesRouter);
 
 server.get('/', (req, res) => {
     console.log(req.session);
-    res.send({server: 'up'});
+    res.status(200).json({server: 'up'});
 })
 
 module.exports = server;
