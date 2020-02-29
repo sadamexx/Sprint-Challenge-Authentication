@@ -33,6 +33,15 @@ describe('test runs', () => {
         })
     })
 
+    it("should return 201 Created", function() {
+        return request(server)
+          .post("/api/auth/register")
+          .send({ username: "TEST", password: "TEST" })
+          .then(res => {
+            expect(res.status).toBe(201);
+          });
+      });
+
 
     //LOGIN TESTS
     describe('POST /login', function() {
@@ -52,5 +61,18 @@ describe('test runs', () => {
             })
         })
     })
+
+    it("should return 200 on login", async () => {
+        // User registers
+        const response = await request(server)
+          .post("/api/auth/register")
+          .send({ username: "Addy", password: "pass" });
+    
+        // User logs in
+        const loginResponse = await request(server)
+          .post("/api/auth/login")
+          .send({ username: "Addy", password: "pass" });
+        expect(loginResponse.status).toBe(200);
+      });
     
 })
