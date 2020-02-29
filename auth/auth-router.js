@@ -1,11 +1,72 @@
 const router = require('express').Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const Users = require('./auth-model.js');
+
 
 router.post('/register', (req, res) => {
-  // implement registration
+  let user = req.body;
+  const hash = bcrypt.hashSync(user.password, 10);
+  user.password = hash;
+
+  Users.add(user)
+  .then(saved => {
+    // req.session.loggedIn = true;
+    res.status(201).json(saved);
+  })
+  .catch(error => {
+    res.status(500).json({message: "Unable to register, please try again"})
+  });
 });
 
 router.post('/login', (req, res) => {
-  // implement login
+  let { username, password } = req.body;
+
+  Users.findBy({ username })
+  .first()
+  .then(user => {
+    if(user && bcrypt.compareSync(password, user.password)){
+      // req.session.loggedIn = true;
+      // req.session.username = user.username;
+      const token = signToken(user)
+      res.status(200).json({message: `Welcome ${user.username}!`, token})
+    } else {
+      res.status(401).json({ message: "Invalid Credentials"});
+    }
+  })
+  .catch(error => {
+    res.status(500).json({error});
+  });
 });
+
+// router.get('/logout', (req, res) => {
+//   if(req.session){
+//     req.session.destroy(error => {
+//       if(err){
+//         res.status(500).json({ message: "You are still logged in, sorry!"});
+//       } else {
+//         res.status(200).json({ message: "You successfully logged out! Come back soon!"});
+//       }
+//     });
+//   } else {
+//     res.status(200).json({ message: "You successfully logged out! Come back soon!"});
+//   }
+// });
+
+//Sign Token
+function signToken(user) {
+  const payload = {
+    username: user.username,
+    id: user.id
+  };
+
+  const secret = "Chanyeol";
+
+  const options = {
+    expiresIn: "1d"
+  };
+
+  return jwt.sign(payload, secret, options);
+};
 
 module.exports = router;
